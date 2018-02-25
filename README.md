@@ -1,6 +1,6 @@
 # Pest Control
 
-A Python Test Control (Pest Control) Library
+A Python Unit Testing Library
 
 ## Usage
 
