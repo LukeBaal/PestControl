@@ -1,3 +1,4 @@
+import re
 from time import time
 
 from colorama import Back, Fore, Style, init
@@ -28,7 +29,7 @@ class PestCase:
     def main(self):
         """Runner function to find and run all tests"""
 
-        functions = [fcn for fcn in dir(self) if fcn.endswith("test")]
+        functions = [fcn for fcn in dir(self) if re.compile("[Tt]est").search(fcn) != None]
 
         for fcn in functions:
             self.begin(fcn)

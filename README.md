@@ -21,7 +21,8 @@ Then make a class that extends PestCase to be the unit test class (class name ca
 class BasicTestCase(PestCase):
 ```
 
-Then write one or more functions for the actual test. NOTE: Make "test" MUST be the last thing in the function name.
+Then write one or more functions for the actual test. NOTE: "test" MUST be somewhere in the function name.
+For example, add_test(), addTest(), addTesting(), add_Tester(), add_tester(), will all run, but add(), will not run.  
 ```python
 class BasicTestCase(PestCase):
     def add_test(self):
