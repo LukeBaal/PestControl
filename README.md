@@ -6,7 +6,7 @@ A Python Test Control (Pest Control) Library
 
 
 example:
-'''python
+```python
 from pest_control import PestCase
 class BasicTestCase(PestCase):
     def add_test(self):
@@ -14,4 +14,4 @@ class BasicTestCase(PestCase):
 
 if __name__ == "__main__":
     PestCase().main()
-'''
+```
