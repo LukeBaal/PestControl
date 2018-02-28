@@ -4,6 +4,22 @@ from time import time
 from colorama import Back, Fore, Style, init
 
 
+def failures_xml(fcn):
+    failures = ""
+    for test in fcn:
+        if not test["result"]:
+            failures += "<failure message=\"%s\"></failure>\n" % (test["msg"])
+    return failures
+
+
+def testcases_xml(results):
+    testcases = ""
+    for fcn in results:
+        testcases += "<testcase classname=\"%s\" time=\"%f\">\n\t%s\n</testcase>\n" % (
+            fcn, 0, failures_xml(results[fcn]))
+    return testcases
+
+
 class PestCase:
     """ Python Unit Testing Library
     Note: test functions must end in "test"
@@ -29,7 +45,8 @@ class PestCase:
     def main(self):
         """Runner function to find and run all tests"""
 
-        functions = [fcn for fcn in dir(self) if re.compile("[Tt]est").search(fcn) != None]
+        functions = [fcn for fcn in dir(self) if re.compile(
+            "[Tt]est").search(fcn) != None]
 
         for fcn in functions:
             self.begin(fcn)
@@ -101,8 +118,20 @@ class PestCase:
             "result": not val
         })
 
+    def get_results_xml(self):
+        out = open("test-reports/results.xml", "w")
+        num_tests = len(self.passed)
+        num_failures = len([test for test in self.passed if not test])
+        out.write("<testsuites name=\"PestCase Tests\">\n\t<testsuite name=\"testsuite\" tests=\"%d\" failures=\"%d\" time=\"%s\">\n\t%s</testsuite></testsuites>" %
+                  (num_tests, num_failures, time()-self.start, testcases_xml(self.results)))
+        out.close()
+
     def __repr__(self):
         """ Determine Results of Tests """
+
+        # Generate results in Junit XML Schema for use with CI services
+        self.get_results_xml()
+
         results = "\n"
         if self.passing:
             results += "%s%s  OK! %d tests completed in %fsec  %s\n" % (
@@ -130,5 +159,5 @@ class PestCase:
                                                                                                         Fore.RED, Style.RESET_ALL, test["time"], test["msg"], test["expected"], test["actual"])
                             else:
                                 results += "%c── %sFailure!%s %s\n" % (c,
-                                                                                Fore.RED, Style.RESET_ALL, test["msg"])
+                                                                       Fore.RED, Style.RESET_ALL, test["msg"])
         return results
