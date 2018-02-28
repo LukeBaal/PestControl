@@ -129,6 +129,6 @@ class PestCase:
                                 results += "%c── %sFailure!%s in %fsec %s - Expected: %s, Got: %s\n" % (c,
                                                                                                         Fore.RED, Style.RESET_ALL, test["time"], test["msg"], test["expected"], test["actual"])
                             else:
-                                results += "%c── %sFailure!%s in %fsec %s\n" % (c,
-                                                                                Fore.RED, Style.RESET_ALL, test["time"], test["msg"])
+                                results += "%c── %sFailure!%s %s\n" % (c,
+                                                                                Fore.RED, Style.RESET_ALL, test["msg"])
         return results
