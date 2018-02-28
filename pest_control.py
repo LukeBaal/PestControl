@@ -1,4 +1,5 @@
 import re
+import sys
 from time import time
 
 from colorama import Back, Fore, Style, init
@@ -55,6 +56,8 @@ class PestCase:
             except Exception as e:
                 self.catch(e, fcn)
         print(self)
+        if not self.passing:
+            sys.exit(1)
 
     def begin(self, name):
         self.current = name
