@@ -1,4 +1,4 @@
-# Pest Control
+# Pest Control [![CircleCI Build Status](https://circleci.com/gh/circleci/circleci-docs.svg?style=shield)]
 
 A Python Unit Testing Library
 
