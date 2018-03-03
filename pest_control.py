@@ -1,24 +1,26 @@
+import errno
+import os
 import re
 import sys
-from time import time
+from time import sleep, time
 
 from colorama import Back, Fore, Style, init
 
 
-def failures_xml(fcn):
-    failures = ""
-    for test in fcn:
-        if not test["result"]:
-            failures += "<failure message=\"%s\"></failure>\n" % (test["msg"])
-    return failures
+# Taken from https://stackoverflow.com/a/600612/119527
+def mkdir_p(path):
+    try:
+        os.makedirs(path)
+    except OSError as e:
+        if e.errno == errno.EEXIST and os.path.isdir(path):
+            pass
+        else:
+            raise
 
 
-def testcases_xml(results):
-    testcases = ""
-    for fcn in results:
-        testcases += "<testcase classname=\"%s\" time=\"%f\">\n\t%s\n</testcase>\n" % (
-            fcn, 0, failures_xml(results[fcn]))
-    return testcases
+def save_open_w(path):
+    mkdir_p(os.path.dirname(path))
+    return open(path, "w")
 
 
 class PestCase:
@@ -38,9 +40,11 @@ class PestCase:
     def __init__(self):
         init()  # Colorama init
         self.start = time()
+        self.time = 0
         self.passing = True
         self.results = {}
         self.passed = {}
+        self.start_times = {}
         self.current = ''
 
     def main(self):
@@ -55,14 +59,21 @@ class PestCase:
                 getattr(self, fcn)()
             except Exception as e:
                 self.catch(e, fcn)
+        self.time = time() - self.start
+
+        # Generate results in Junit XML Schema for use with CI services
+        self.get_results_xml()
+
         print(self)
         if not self.passing:
             sys.exit(1)
 
     def begin(self, name):
+        """Run This function before beginning a test function"""
         self.current = name
         self.results[name] = []
         self.passed[name] = True
+        self.start_times[name] = time()
 
     def catch(self, e, name):
         """Catch an exception caused by a test and log it"""
@@ -71,19 +82,19 @@ class PestCase:
         self.results[name].append({
             "msg": repr(e),
             "type": "Error",
+            "end": time(),
             "result": False
         })
 
     def assertEquals(self, actual, expected, msg=""):
         """ Test if actual == expected """
-        start = time()
         if actual != expected:
             self.passing = False
             self.passed[self.current] = False
         self.results[self.current].append({
             "msg": msg,
             "type": "isEqual",
-            "time": time() - start,
+            "end": time(),
             "actual": actual,
             "expected": expected,
             "result": actual == expected
@@ -91,7 +102,6 @@ class PestCase:
 
     def assertTrue(self, val, msg):
         """ Test if val == True """
-        start = time()
         if not val:
             self.passing = False
             self.passed[self.current] = False
@@ -99,7 +109,7 @@ class PestCase:
         self.results[self.current].append({
             "msg": msg,
             "type": "isTrue",
-            "time": time() - start,
+            "end": time(),
             "actual": val,
             "expected": True,
             "result": val
@@ -107,7 +117,6 @@ class PestCase:
 
     def assertFalse(self, val, msg):
         """ Test if val == False """
-        start = time()
         if val:
             self.passing = False
             self.passed[self.current] = False
@@ -115,25 +124,39 @@ class PestCase:
         self.results[self.current].append({
             "msg": msg,
             "type": "isFalse",
-            "time": time() - start,
+            "end": time(),
             "actual": val,
             "expected": False,
             "result": not val
         })
 
+    def failures_xml(self):
+        failures = ""
+        for fcn in self.results:
+            for test in self.results[fcn]:
+                if not test["result"]:
+                    failures += "\t\t\t<failure message=\"%s\"></failure>\n" % (
+                        test["msg"])
+        return failures
+
+    def results_xml(self):
+        testcases = "\t\t<testcase classname=\"%s\" time=\"%f\">\n%s\n\t\t</testcase>\n" % (
+            self.__class__.__name__, self.time, self.failures_xml())
+        return testcases
+
     def get_results_xml(self):
-        out = open("test-reports/results.xml", "w")
+        out = save_open_w(os.getcwd()+"/test-reports/results.xml")
         num_tests = len(self.passed)
-        num_failures = len([test for test in self.passed if not test])
-        out.write("<testsuites name=\"PestCase Tests\">\n\t<testsuite name=\"testsuite\" tests=\"%d\" failures=\"%d\" time=\"%s\">\n\t%s</testsuite></testsuites>" %
-                  (num_tests, num_failures, time()-self.start, testcases_xml(self.results)))
+        num_errors = len(
+            [test["type"] for fcn in self.results for test in self.results[fcn] if test["type"] == "Error"])
+        num_failures = len([test["type"] for fcn in self.results for test in self.results[fcn]
+                            if test["type"] != "Error" and not test["result"]])
+        out.write("<testsuites name=\"PestCase Tests\">\n\t<testsuite name=\"testsuite\" tests=\"%d\" errors=\"%d\" failures=\"%d\" time=\"%f\">\n%s\t</testsuite>\n</testsuites>" %
+                  (num_tests, num_errors, num_failures, self.time, self.results_xml()))
         out.close()
 
     def __repr__(self):
         """ Determine Results of Tests """
-
-        # Generate results in Junit XML Schema for use with CI services
-        self.get_results_xml()
 
         results = "\n"
         if self.passing:
@@ -154,13 +177,13 @@ class PestCase:
                         if len(self.results[fcn]) == index + 1:
                             c = '└'
                         if test["result"]:
-                            results += "%c── %sSuccess!%s in %fsec %s\n" % (c,
-                                                                            Fore.GREEN, Style.RESET_ALL, test["time"], test["msg"])
+                            results += "%c── %sSuccess!%s %s\n" % (c,
+                                                                   Fore.GREEN, Style.RESET_ALL, test["msg"])
                         else:
                             if test["type"] != "Error":
-                                results += "%c── %sFailure!%s in %fsec %s - Expected: %s, Got: %s\n" % (c,
-                                                                                                        Fore.RED, Style.RESET_ALL, test["time"], test["msg"], test["expected"], test["actual"])
+                                results += "%c── %sFailure!%s %s - Expected: %s, Got: %s\n" % (c,
+                                                                                               Fore.RED, Style.RESET_ALL, test["msg"], test["expected"], test["actual"])
                             else:
-                                results += "%c── %sFailure!%s %s\n" % (c,
-                                                                       Fore.RED, Style.RESET_ALL, test["msg"])
+                                results += "%c── %sError!%s %s\n" % (c,
+                                                                     Fore.RED, Style.RESET_ALL, test["msg"])
         return results
