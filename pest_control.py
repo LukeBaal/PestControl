@@ -146,13 +146,18 @@ class PestCase:
 
     def get_results_xml(self):
         out = save_open_w(os.getcwd()+"/test-reports/results.xml")
-        num_tests = len(self.passed)
-        num_errors = len(
-            [test["type"] for fcn in self.results for test in self.results[fcn] if test["type"] == "Error"])
-        num_failures = len([test["type"] for fcn in self.results for test in self.results[fcn]
-                            if test["type"] != "Error" and not test["result"]])
+        # num_tests = len(self.passed)
+        num_errors = 0
+        if len([test["type"] for fcn in self.results for test in self.results[fcn] if test["type"] == "Error"]) > 0:
+            num_errors = 1
+        if self.passed:
+            num_failures = 0
+        else:
+            num_failures = 1
+        # num_failures = len([test["type"] for fcn in self.results for test in self.results[fcn]
+        #                     if test["type"] != "Error" and not test["result"]])
         out.write("<testsuites name=\"PestCase Tests\">\n\t<testsuite name=\"testsuite\" tests=\"%d\" errors=\"%d\" failures=\"%d\" time=\"%f\">\n%s\t</testsuite>\n</testsuites>" %
-                  (num_tests, num_errors, num_failures, self.time, self.results_xml()))
+                  (1, num_errors, num_failures, self.time, self.results_xml()))
         out.close()
 
     def __repr__(self):
