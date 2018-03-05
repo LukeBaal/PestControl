@@ -12,17 +12,25 @@ Test Functions:
 ### How to
 
 Start by importing the library. Assuming file is in same directory as the PestControl library directory:
-```python
-from PestControl.pest_control import PestCase
+for example for the test script "basic_test.py", use the following folder structure for this example:
+```
+/
+|- pestcontrol/
+|	- pest_control.py
+|- basic_test.py
+```
+
+```
+import pestcontrol
 ```
 
 Then make a class that extends PestCase to be the unit test class (class name can be anything, "BasicTestCase" is used here)
 ```python
-class BasicTestCase(PestCase):
+class BasicTestCase(pestcontrol.PestCase):
 ```
 
 Then write one or more functions for the actual test. NOTE: "test" MUST be somewhere in the function name.
-For example, add_test(), addTest(), addTesting(), add_Tester(), add_tester(), will all run, but add(), will not run.  
+For example, add_test(), addTest(), addTesting(), add_Tester(), add_tester(), will all run, but add(), will not run.
 ```python
 class BasicTestCase(PestCase):
     def add_test(self):
@@ -35,12 +43,12 @@ if __name__ == "__main__":
     PestCase().main()
 ```
 
-That's it! Your unit test will run and print to the console the results. Note: any errors that occur from a call to an assert function, ie errors caused by the code being tested, will be caught and logged as a failed test.
+That's it! Your unit test will run and print to the console the results. Note: any errors that occur from a call to an assert function, ie errors caused by the code being tested, will be caught and logged as a failed test (divide by zero error for example).
 
 Full Example:
 ```python
-from pest_control import PestCase
-class BasicTestCase(PestCase):
+import pestcontrol
+class BasicTestCase(pestcontrol.PestCase):
     def add_test(self):
         self.assertEquals(1+1, 2, "simple add test")
 
