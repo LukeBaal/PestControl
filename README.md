@@ -40,7 +40,7 @@ class BasicTestCase(PestCase):
 Now just add the main() funciton call
 ```python
 if __name__ == "__main__":
-    PestCase().main()
+    BasicTestCase().main()
 ```
 
 That's it! Your unit test will run and print to the console the results. Note: any errors that occur from a call to an assert function, ie errors caused by the code being tested, will be caught and logged as a failed test (divide by zero error for example).
@@ -53,5 +53,5 @@ class BasicTestCase(pestcontrol.PestCase):
         self.assertEquals(1+1, 2, "simple add test")
 
 if __name__ == "__main__":
-    PestCase().main()
+    BasicTestCase().main()
 ```
