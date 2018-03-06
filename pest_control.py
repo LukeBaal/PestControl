@@ -2,7 +2,7 @@ import errno
 import os
 import re
 import sys
-from time import sleep, time
+from time import time
 
 from colorama import Back, Fore, Style, init
 
