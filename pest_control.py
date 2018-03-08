@@ -176,11 +176,11 @@ class PestCase:
         # If all tests passed, print simple result
         if self.passing:
             results += "%s%s  OK! %d tests completed in %fsec  %s\n" % (
-                Back.GREEN, Fore.BLACK, len(self.passed), time() - self.start, Style.RESET_ALL)
+                Back.GREEN, Fore.BLACK, len(self.passed), self.time, Style.RESET_ALL)
         else:
             # If one or more tests fail, indicate failure
             results += "%s  FAILURE! %d tests completed in %fsec  %s\n" % (
-                Back.RED, len(self.passed), time() - self.start, Style.RESET_ALL)
+                Back.RED, len(self.passed), time() - self.time, Style.RESET_ALL)
             # For each function, print results breakdown
             for fcn in self.results:
                 # If all tests in the function passed, simply indicate its success
