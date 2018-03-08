@@ -7,15 +7,19 @@ from time import time
 from colorama import Back, Fore, Style, init
 
 
-# Taken from https://stackoverflow.com/a/600612/119527
+# Create a directory at given path if it does not already exist
 def mkdir_p(path):
     try:
+        # directory does not exist at path, create it
         os.makedirs(path)
     except OSError as e:
+        # directory exists at path
         if e.errno == errno.EEXIST and os.path.isdir(path):
             pass
         else:
             raise
+
+# Wrapper function for mkdir_p()
 
 
 def save_open_w(path):
@@ -53,18 +57,22 @@ class PestCase:
         functions = [fcn for fcn in dir(self) if re.compile(
             "[Tt]est").search(fcn) != None]
 
+        # For each test function, run it
         for fcn in functions:
             self.begin(fcn)
             try:
                 getattr(self, fcn)()
             except Exception as e:
                 self.catch(e, fcn)
+        # After all test functions have run, log time elapsed
         self.time = time() - self.start
 
         # Generate results in Junit XML Schema for use with CI services
         self.get_results_xml()
 
+        # Print results (calls "__repr__" function)
         print(self)
+        # One or more tests fail, exit with exit code 1
         if not self.passing:
             sys.exit(1)
 
@@ -131,6 +139,7 @@ class PestCase:
         })
 
     def failures_xml(self):
+        """ Create a failure xml element for each failed test of the testcase"""
         failures = ""
         for fcn in self.results:
             for test in self.results[fcn]:
@@ -140,13 +149,14 @@ class PestCase:
         return failures
 
     def results_xml(self):
+        """ Create a testcase xml element for the test case"""
         testcases = "\t\t<testcase classname=\"%s\" time=\"%f\">\n%s\n\t\t</testcase>\n" % (
             self.__class__.__name__, self.time, self.failures_xml())
         return testcases
 
     def get_results_xml(self):
+        """ Create and write xml result file """
         out = save_open_w(os.getcwd()+"/test-reports/results.xml")
-        # num_tests = len(self.passed)
         num_errors = 0
         if len([test["type"] for fcn in self.results for test in self.results[fcn] if test["type"] == "Error"]) > 0:
             num_errors = 1
@@ -154,8 +164,6 @@ class PestCase:
             num_failures = 0
         else:
             num_failures = 1
-        # num_failures = len([test["type"] for fcn in self.results for test in self.results[fcn]
-        #                     if test["type"] != "Error" and not test["result"]])
         out.write("<testsuites name=\"PestCase Tests\">\n\t<testsuite name=\"testsuite\" tests=\"%d\" errors=\"%d\" failures=\"%d\" time=\"%f\">\n%s\t</testsuite>\n</testsuites>" %
                   (1, num_errors, num_failures, self.time, self.results_xml()))
         out.close()
@@ -164,19 +172,25 @@ class PestCase:
         """ Determine Results of Tests """
 
         results = "\n"
+        # If all tests passed, print simple result
         if self.passing:
             results += "%s%s  OK! %d tests completed in %fsec  %s\n" % (
                 Back.GREEN, Fore.BLACK, len(self.passed), time() - self.start, Style.RESET_ALL)
         else:
+            # If one or more tests fail, indicate failure
             results += "%s  FAILURE! %d tests completed in %fsec  %s\n" % (
                 Back.RED, len(self.passed), time() - self.start, Style.RESET_ALL)
+            # For each function, print results breakdown
             for fcn in self.results:
+                # If all tests in the function passed, simply indicate its success
                 if self.passed[fcn]:
                     results += "%sSuccess!%s %s\n" % (
                         Fore.GREEN, Style.RESET_ALL, fcn)
                 else:
+                    # If one or more tests in the function fail, indicate results of each test
                     results += "%sFailure!%s %s\n" % (
                         Fore.RED, Style.RESET_ALL, fcn)
+                    # Loop through all tests in the function
                     for index, test in enumerate(self.results[fcn]):
                         c = '├'
                         if len(self.results[fcn]) == index + 1:
