@@ -43,7 +43,6 @@ class PestCase:
 
     def __init__(self):
         init()  # Colorama init
-        self.start = time()
         self.time = 0
         self.passing = True
         self.results = {}
@@ -57,6 +56,8 @@ class PestCase:
         functions = [fcn for fcn in dir(self) if re.compile(
             "[Tt]est").search(fcn) != None]
 
+        # Log current timestamp for test timing
+        start = time()
         # For each test function, run it
         for fcn in functions:
             self.begin(fcn)
@@ -65,7 +66,7 @@ class PestCase:
             except Exception as e:
                 self.catch(e, fcn)
         # After all test functions have run, log time elapsed
-        self.time = time() - self.start
+        self.time = time() - start
 
         # Generate results in Junit XML Schema for use with CI services
         self.get_results_xml()
