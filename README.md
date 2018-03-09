@@ -20,7 +20,7 @@ for example for the test script "basic_test.py", use the following folder struct
 |- basic_test.py
 ```
 
-```
+```python
 import pestcontrol
 ```
 
